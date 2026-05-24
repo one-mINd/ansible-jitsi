@@ -1,0 +1,67 @@
+---
+- name: Gather docker containers info
+  community.docker.docker_host_info:
+    containers: true
+  register: docker_info
+  tags:
+    - manage
+
+- name: Find prosody container
+  ansible.builtin.set_fact:
+    prosody_container_name: >-
+      {{
+        (
+          docker_info.containers
+          | selectattr('Names', 'defined')
+          | selectattr('Names.0', 'search', 'prosody')
+          | map(attribute='Names')
+          | map('first')
+          | first
+        )
+        | regex_replace('^/', '')
+      }}
+  tags:
+    - manage
+
+- name: Get existing Prosody users
+  community.docker.docker_container_exec:
+    container: "{{ prosody_container_name }}"
+    command: >
+      find /config/data/meet%2ejitsi/accounts
+      -type f
+      -exec basename {} .dat \;
+  register: prosody_users_raw
+  tags:
+    - manage
+
+- name: Set existing users fact
+  ansible.builtin.set_fact:
+    prosody_existing_users: >-
+      {{
+        prosody_users_raw.stdout_lines
+        | reject('equalto', '')
+        | list
+      }}
+  tags:
+    - manage
+
+- name: Remove existing Prosody users
+  community.docker.docker_container_exec:
+    container: "{{ prosody_container_name }}"
+    command: >
+      prosodyctl --config /config/prosody.cfg.lua
+      unregister {{ item }} meet.jitsi
+  loop: "{{ prosody_existing_users }}"
+  when: prosody_existing_users | length > 0
+  tags:
+    - manage
+
+- name: Create Prosody users
+  community.docker.docker_container_exec:
+    container: "{{ prosody_container_name }}"
+    command: >
+      prosodyctl --config /config/prosody.cfg.lua
+      register {{ item.name }} meet.jitsi {{ item.password }}
+  loop: "{{ jitsi_users }}"
+  tags:
+    - manage

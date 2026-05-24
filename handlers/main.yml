@@ -1,0 +1,5 @@
+---
+- name: restart Jitsi
+  community.docker.docker_compose_v2:
+    project_src: "{{ jitsi_dir }}"
+    state: restarted

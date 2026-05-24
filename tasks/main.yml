@@ -1,0 +1,11 @@
+---
+- name: Install and configure Jitsi
+  ansible.builtin.include_tasks: "install.yml"
+  tags:
+    - install
+    - configure
+
+- name: Manage users
+  ansible.builtin.include_tasks: "user-manage.yml"
+  tags:
+    - manage

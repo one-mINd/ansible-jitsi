@@ -1,0 +1,64 @@
+---
+- name: Ensure jitsi directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+  - "{{ jitsi_dir }}"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/web"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/transcripts"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/prosody"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/prosody/config"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/prosody/prosody-plugins-custom"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/jicofo"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/jvb"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/jigasi"
+  - "{{ jitsi_dir }}/.jitsi-meet-cfg/jibri"
+  tags:
+    - install
+
+- name: Unzip jitsi zipball
+  ansible.builtin.unarchive:
+    src: "https://api.github.com/repos/jitsi/docker-jitsi-meet/zipball/{{ jitsi_version }}"
+    dest: "/tmp/"
+    remote_src: true
+  tags:
+    - install
+
+- name: Find the jitsi directory in /tmp
+  ansible.builtin.find:
+    paths: "/tmp"
+    patterns: "jitsi-docker-jitsi-meet-*"
+    file_type: directory
+  register: jitsi_unpacked_dir
+  tags:
+    - install
+
+- name: Copy jitsi to directory
+  ansible.builtin.copy:
+    src: "{{ jitsi_unpacked_dir.files[0].path }}/" 
+    dest: "{{ jitsi_dir }}/"
+    remote_src: true
+  tags:
+    - install
+
+- name: Ensure .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: "{{ jitsi_dir }}/.env"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart Jitsi
+  tags:
+    - install
+    - configure
+
+- name: Start Jitsi
+  community.docker.docker_compose_v2:
+    project_src: "{{ jitsi_dir }}"
+    state: present
+  tags:
+    - install

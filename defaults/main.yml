@@ -1,0 +1,67 @@
+---
+jitsi_dir: /var/jitsi
+
+# You can select a version on the repository's realizes page.
+# https://github.com/jitsi/docker-jitsi-meet/releases
+jitsi_version: stable-10978
+
+# You need to sets strong passwords 
+# for internal accounts used across components
+# run the script ./internal-passwords.sh
+# #
+# If you need to change passwords after first deploy
+# delete cfg dir
+# rm -rf {{ jitsi_dir }}/.jitsi-meet-cfg
+jitsi_jicofo_auth_password: secret
+jitsi_jvb_auth_password: secret
+jitsi_jigasi_xmpp_password: secret
+jitsi_jigasi_transcriber_password: secret
+jitsi_jibri_recorder_password: secret
+jitsi_jibri_xmpp_password: secret
+
+# To specify users, the following variables must be specified in env
+# ENABLE_AUTH=1 
+# AUTH_TYPE=internal
+jitsi_users: []
+  # - name: user1
+  #   password: user1-pass
+  # - name: user2
+  #   password: user2-pass
+
+# You can find all possible env variables at the following link.
+# https://github.com/jitsi/docker-jitsi-meet/blob/master/env.example
+jitsi_envs:
+  - "CONFIG={{ jitsi_dir }}/.jitsi-meet-cfg"
+  - HTTP_PORT=8000
+  - HTTPS_PORT=8443
+  - ENABLE_HTTP_REDIRECT=1
+  - TZ=UTC
+  - RESTART_POLICY=unless-stopped
+  - PUBLIC_URL=https://meet.example.com:${HTTPS_PORT}
+
+# Some useful examples of variable sets
+
+# Run jitsi without a reverse proxy in front of it 
+# and let the service obtain letsencrypt certificates on its own
+# jitsi_envs:
+#   ...
+#   - ENABLE_LETSENCRYPT=1
+#   - LETSENCRYPT_DOMAIN="meet.example.com"
+#   - LETSENCRYPT_EMAIL="meet@mail.com"
+#   - LETSENCRYPT_ACME_SERVER="letsencrypt"
+#   ...
+
+# Limit java components
+# jitsi_envs:
+#   ...
+#   - JICOFO_MAX_MEMORY=2048m
+#   - VIDEOBRIDGE_MAX_MEMORY=2048m
+#   ...
+
+# Restrict access to authorized users only
+# jitsi_envs:
+#   ...
+#   - ENABLE_AUTH=1
+#   - ENABLE_GUESTS=0
+#   - AUTH_TYPE=internal
+#   ...
