@@ -1,5 +1,10 @@
 ---
-- name: restart Jitsi
+- name: restart Jitsi | down
   community.docker.docker_compose_v2:
     project_src: "{{ jitsi_dir }}"
-    state: restarted
+    state: absent
+
+- name: restart Jitsi | up
+  community.docker.docker_compose_v2:
+    project_src: "{{ jitsi_dir }}"
+    state: present

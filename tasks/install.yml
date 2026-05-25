@@ -51,7 +51,9 @@
     owner: root
     group: root
     mode: '0644'
-  notify: restart Jitsi
+  notify:
+    - restart Jitsi | down
+    - restart Jitsi | up
   tags:
     - install
     - configure
